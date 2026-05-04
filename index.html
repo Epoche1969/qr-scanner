@@ -18,33 +18,36 @@
     .wrap {
       max-width: 720px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 16px;
     }
 
     .card {
       background: white;
       border-radius: 20px;
-      padding: 24px;
+      padding: 20px;
       box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-      margin-top: 20px;
+      margin-top: 12px;
     }
 
     h1 {
       margin: 0;
       color: #0f2e6e;
-      font-size: 32px;
+      font-size: 34px;
+      text-align: center;
     }
 
     .sub {
       margin-top: 8px;
       color: #64748b;
-      font-size: 17px;
+      font-size: 18px;
+      text-align: center;
+      font-weight: 700;
     }
 
     video {
       width: 100%;
-      margin-top: 24px;
-      border-radius: 16px;
+      margin-top: 18px;
+      border-radius: 18px;
       background: #0f172a;
       border: 1px solid #cbd5e1;
     }
@@ -56,74 +59,82 @@
     .buttons {
       display: flex;
       gap: 10px;
-      margin-top: 18px;
+      margin-top: 14px;
       flex-wrap: wrap;
     }
 
     button {
       flex: 1;
       border: 0;
-      border-radius: 12px;
-      padding: 14px;
-      font-size: 16px;
-      font-weight: 700;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 900;
       cursor: pointer;
       color: white;
     }
 
+    .voice { background: #111827; }
     .start { background: #047857; }
     .stop { background: #dc2626; }
     .manual-btn { background: #2563eb; }
 
     .result {
-      display: none;
-      margin-top: 20px;
-      padding: 28px 20px;
-      border-radius: 18px;
+      display: block;
+      margin-top: 18px;
+      padding: 30px 18px;
+      border-radius: 20px;
       text-align: center;
       font-weight: 900;
-      line-height: 1.5;
+      line-height: 1.45;
+      min-height: 110px;
     }
 
     .success {
-      display: block;
-      background: #ecfdf5;
-      color: #047857;
-      border: 2px solid #22c55e;
+      background: #16a34a;
+      color: white;
+      border: 4px solid #15803d;
+      box-shadow: 0 10px 28px rgba(22, 163, 74, 0.35);
+    }
+
+    .duplicate {
+      background: #dc2626;
+      color: white;
+      border: 4px solid #991b1b;
+      box-shadow: 0 10px 28px rgba(220, 38, 38, 0.35);
     }
 
     .fail {
-      display: block;
       background: #fef2f2;
       color: #dc2626;
-      border: 2px solid #ef4444;
+      border: 3px solid #ef4444;
     }
 
     .waiting {
-      display: block;
       background: #eff6ff;
       color: #0f2e6e;
-      border: 2px solid #bfdbfe;
+      border: 3px solid #bfdbfe;
     }
 
     .big-name {
-      font-size: 34px;
-      margin-bottom: 8px;
+      font-size: 36px;
+      margin-bottom: 10px;
     }
 
     .big-type {
-      font-size: 42px;
-      margin-bottom: 8px;
+      font-size: 38px;
+      margin-bottom: 10px;
     }
 
     .big-time {
       font-size: 22px;
-      color: #334155;
+      color: inherit;
+      opacity: 0.95;
     }
 
     .manual {
-      margin-top: 24px;
-      padding: 18px;
+      margin-top: 20px;
+      padding: 16px;
       border-radius: 16px;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -148,7 +159,7 @@
     .small {
       margin-top: 14px;
       color: #64748b;
-      font-size: 13px;
+      font-size: 12px;
       word-break: break-all;
     }
   </style>
@@ -159,6 +170,10 @@
     <div class="card">
       <h1>출첵 스캐너</h1>
       <div class="sub">직원 QR을 카메라에 보여주세요.</div>
+
+      <div class="buttons">
+        <button class="voice" onclick="unlockAudio()">음성 안내 시작</button>
+      </div>
 
       <video id="video" playsinline muted></video>
       <canvas id="canvas"></canvas>
@@ -190,8 +205,29 @@
     let isProcessing = false;
     let lastToken = '';
     let lastScanTime = 0;
+    let audioCtx = null;
+
+    function unlockAudio() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!audioCtx) {
+          audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        beep(880, 0.08, 0.04);
+        speakText('음성 안내가 시작되었습니다');
+        showWaiting('음성 안내 준비 완료. 스캔 시작을 눌러주세요.');
+      } catch (error) {
+        speakText('음성 안내가 시작되었습니다');
+      }
+    }
 
     function startScanner() {
+      unlockAudio();
+
       const video = document.getElementById('video');
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -269,6 +305,8 @@
     }
 
     function submitManual() {
+      unlockAudio();
+
       const token = document.getElementById('manualToken').value.trim();
 
       if (!token) {
@@ -301,15 +339,34 @@
         delete window[callbackName];
 
         if (result && result.success) {
-          playSuccessSound();
+          const name = result.displayName || result.name || '직원';
+          const checkType = result.checkType || '출근';
+          const scanTime = result.scanTime || '';
+
+          playSuccessVoice(name, checkType);
+
           showSuccess(
-            '<div class="big-name">' + escapeHtml(result.displayName) + '</div>' +
-            '<div class="big-type">' + escapeHtml(result.checkType) + ' 완료</div>' +
-            '<div class="big-time">' + escapeHtml(result.scanTime) + '</div>'
+            '<div class="big-name">' + escapeHtml(name) + '님</div>' +
+            '<div class="big-type">정상 ' + escapeHtml(checkType) + ' 처리되었습니다</div>' +
+            '<div class="big-time">' + escapeHtml(scanTime) + '</div>'
           );
         } else {
-          playFailSound();
-          showFail(result.message || '출첵 실패');
+          if (isDuplicateResult(result)) {
+            const name = result && (result.displayName || result.name) ? (result.displayName || result.name) : '';
+            const scanTime = result && result.scanTime ? result.scanTime : '';
+
+            playDuplicateWarning(name);
+
+            showDuplicate(
+              '<div class="big-name">' + escapeHtml(name ? name + '님' : '중복 출첵') + '</div>' +
+              '<div class="big-type">이미 출근 처리된 직원입니다</div>' +
+              '<div class="big-time">' + escapeHtml(scanTime) + '</div>'
+            );
+          } else {
+            playFailSound();
+            speakText('출첵 처리에 실패했습니다');
+            showFail(result && result.message ? result.message : '출첵 실패');
+          }
         }
 
         setTimeout(function() {
@@ -328,6 +385,7 @@
 
       script.onerror = function() {
         playFailSound();
+        speakText('서버 연결에 실패했습니다');
         showFail('서버 연결 실패');
         delete window[callbackName];
         isProcessing = false;
@@ -342,10 +400,81 @@
       }, 10000);
     }
 
+    function isDuplicateResult(result) {
+      if (!result) return false;
+
+      const message = String(result.message || '');
+      const status = String(result.status || '');
+      const code = String(result.code || '');
+
+      return (
+        result.duplicate === true ||
+        result.isDuplicate === true ||
+        status.includes('duplicate') ||
+        code.includes('duplicate') ||
+        message.includes('이미') ||
+        message.includes('중복') ||
+        message.includes('처리된') ||
+        message.includes('출근 처리')
+      );
+    }
+
+    function speakText(text) {
+      try {
+        if (!window.speechSynthesis) return;
+
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        window.speechSynthesis.speak(utterance);
+      } catch (error) {}
+    }
+
+    function playSuccessVoice(name, checkType) {
+      try {
+        if (navigator.vibrate) {
+          navigator.vibrate([150, 70, 150]);
+        }
+
+        playSuccessSound();
+
+        const displayName = name || '직원';
+        const type = checkType || '출근';
+        speakText(displayName + '님 정상 ' + type + ' 처리되었습니다');
+      } catch (error) {
+        speakText('정상 출근 처리되었습니다');
+      }
+    }
+
+    function playDuplicateWarning(name) {
+      try {
+        if (navigator.vibrate) {
+          navigator.vibrate([100, 60, 100, 60, 250]);
+        }
+
+        playWarningSound();
+
+        setTimeout(function() {
+          if (name) {
+            speakText(name + '님 이미 출근 처리된 직원입니다');
+          } else {
+            speakText('이미 출근 처리된 직원입니다');
+          }
+        }, 700);
+      } catch (error) {
+        speakText('이미 출근 처리된 직원입니다');
+      }
+    }
+
     function playSuccessSound() {
-      beep(880, 0.12, 0.05);
+      beep(880, 0.12, 0.06);
       setTimeout(function() {
-        beep(1175, 0.18, 0.05);
+        beep(1175, 0.18, 0.06);
       }, 120);
     }
 
@@ -356,14 +485,32 @@
       }, 180);
     }
 
-    function beep(frequency, duration, volume) {
+    function playWarningSound() {
+      beep(440, 0.16, 0.09, 'square');
+      setTimeout(function() {
+        beep(440, 0.16, 0.09, 'square');
+      }, 210);
+      setTimeout(function() {
+        beep(330, 0.22, 0.09, 'square');
+      }, 420);
+    }
+
+    function beep(frequency, duration, volume, type) {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
+
+        if (!audioCtx) {
+          audioCtx = new AudioContext();
+        }
+
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
 
-        oscillator.type = 'sine';
+        oscillator.type = type || 'sine';
         oscillator.frequency.value = frequency;
         gainNode.gain.value = volume;
 
@@ -371,9 +518,9 @@
         gainNode.connect(audioCtx.destination);
 
         oscillator.start();
+
         setTimeout(function() {
           oscillator.stop();
-          audioCtx.close();
         }, duration * 1000);
       } catch (error) {}
     }
@@ -390,14 +537,20 @@
       box.innerHTML = text;
     }
 
-    function showFail(text) {
+    function showDuplicate(text) {
       const box = document.getElementById('result');
-      box.className = 'result fail';
+      box.className = 'result duplicate';
       box.innerHTML = text;
     }
 
+    function showFail(text) {
+      const box = document.getElementById('result');
+      box.className = 'result fail';
+      box.innerHTML = escapeHtml(text);
+    }
+
     function escapeHtml(value) {
-      return String(value)
+      return String(value || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
