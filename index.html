@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>출첵 스캐너</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans KR", sans-serif;
+      background: #f4f7fb;
+      color: #111827;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      margin-top: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #0f2e6e;
+      font-size: 32px;
+    }
+
+    .sub {
+      margin-top: 8px;
+      color: #64748b;
+      font-size: 17px;
+    }
+
+    video {
+      width: 100%;
+      margin-top: 24px;
+      border-radius: 16px;
+      background: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      flex: 1;
+      border: 0;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+    }
+
+    .start { background: #047857; }
+    .stop { background: #dc2626; }
+    .manual-btn { background: #2563eb; }
+
+    .result {
+      display: none;
+      margin-top: 20px;
+      padding: 28px 20px;
+      border-radius: 18px;
+      text-align: center;
+      font-weight: 900;
+      line-height: 1.5;
+    }
+
+    .success {
+      display: block;
+      background: #ecfdf5;
+      color: #047857;
+      border: 2px solid #22c55e;
+    }
+
+    .fail {
+      display: block;
+      background: #fef2f2;
+      color: #dc2626;
+      border: 2px solid #ef4444;
+    }
+
+    .waiting {
+      display: block;
+      background: #eff6ff;
+      color: #0f2e6e;
+      border: 2px solid #bfdbfe;
+    }
+
+    .big-name {
+      font-size: 34px;
+      margin-bottom: 8px;
+    }
+
+    .big-type {
+      font-size: 42px;
+      margin-bottom: 8px;
+    }
+
+    .big-time {
+      font-size: 22px;
+      color: #334155;
+    }
+
+    .manual {
+      margin-top: 24px;
+      padding: 18px;
+      border-radius: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .manual h2 {
+      margin: 0 0 12px 0;
+      color: #0f2e6e;
+      font-size: 20px;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .small {
+      margin-top: 14px;
+      color: #64748b;
+      font-size: 13px;
+      word-break: break-all;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>출첵 스캐너</h1>
+      <div class="sub">직원 QR을 카메라에 보여주세요.</div>
+
+      <video id="video" playsinline muted></video>
+      <canvas id="canvas"></canvas>
+
+      <div id="result" class="result waiting">
+        스캔 대기중
+      </div>
+
+      <div class="buttons">
+        <button class="start" onclick="startScanner()">스캔 시작</button>
+        <button class="stop" onclick="stopScanner()">스캔 중지</button>
+      </div>
+
+      <div class="manual">
+        <h2>카메라가 안 될 때 직접 입력</h2>
+        <input id="manualToken" type="text" placeholder="예: EMP004-ABC12345">
+        <button class="manual-btn" onclick="submitManual()">직접 출첵</button>
+      </div>
+
+      <div class="small" id="statusText"></div>
+    </div>
+  </div>
+
+  <script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxPDHypVwpaqEdAYUUAj8AGkgaEh4e0zEbp6cr46ru9JldynWDirfV9TpY6DB9JV6aO/exec';
+
+    let videoStream = null;
+    let scanTimer = null;
+    let isProcessing = false;
+    let lastToken = '';
+    let lastScanTime = 0;
+
+    function startScanner() {
+      const video = document.getElementById('video');
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showFail('이 브라우저는 카메라 기능을 지원하지 않습니다.');
+        return;
+      }
+
+      stopScanner();
+      showWaiting('카메라 시작 중...');
+
+      navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      })
+      .then(function(stream) {
+        videoStream = stream;
+        video.srcObject = stream;
+        return video.play();
+      })
+      .then(function() {
+        showWaiting('카메라 준비 완료. QR을 보여주세요.');
+        scanTimer = setInterval(scanFrame, 350);
+      })
+      .catch(function(error) {
+        playFailSound();
+        showFail('카메라 시작 실패: ' + error.name + ' / ' + error.message);
+      });
+    }
+
+    function stopScanner() {
+      if (scanTimer) {
+        clearInterval(scanTimer);
+        scanTimer = null;
+      }
+
+      if (videoStream) {
+        videoStream.getTracks().forEach(function(track) {
+          track.stop();
+        });
+        videoStream = null;
+      }
+
+      const video = document.getElementById('video');
+      if (video) {
+        video.srcObject = null;
+      }
+    }
+
+    function scanFrame() {
+      if (isProcessing) return;
+
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
+
+      if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+      if (code && code.data) {
+        recordAttendance(code.data);
+      }
+    }
+
+    function submitManual() {
+      const token = document.getElementById('manualToken').value.trim();
+
+      if (!token) {
+        playFailSound();
+        showFail('QR토큰을 입력해주세요.');
+        return;
+      }
+
+      recordAttendance(token);
+    }
+
+    function recordAttendance(token) {
+      const now = Date.now();
+
+      if (isProcessing) return;
+
+      if (token === lastToken && now - lastScanTime < 5000) {
+        return;
+      }
+
+      lastToken = token;
+      lastScanTime = now;
+
+      isProcessing = true;
+      showWaiting('QR 확인 중...');
+
+      const callbackName = 'attendanceCallback_' + Date.now();
+
+      window[callbackName] = function(result) {
+        delete window[callbackName];
+
+        if (result && result.success) {
+          playSuccessSound();
+          showSuccess(
+            '<div class="big-name">' + escapeHtml(result.displayName) + '</div>' +
+            '<div class="big-type">' + escapeHtml(result.checkType) + ' 완료</div>' +
+            '<div class="big-time">' + escapeHtml(result.scanTime) + '</div>'
+          );
+        } else {
+          playFailSound();
+          showFail(result.message || '출첵 실패');
+        }
+
+        setTimeout(function() {
+          isProcessing = false;
+          showWaiting('다음 직원 스캔 대기중');
+        }, 3000);
+      };
+
+      const script = document.createElement('script');
+      script.src =
+        WEB_APP_URL +
+        '?api=attendance' +
+        '&token=' + encodeURIComponent(token) +
+        '&callback=' + callbackName +
+        '&t=' + Date.now();
+
+      script.onerror = function() {
+        playFailSound();
+        showFail('서버 연결 실패');
+        delete window[callbackName];
+        isProcessing = false;
+      };
+
+      document.body.appendChild(script);
+
+      setTimeout(function() {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      }, 10000);
+    }
+
+    function playSuccessSound() {
+      beep(880, 0.12, 0.05);
+      setTimeout(function() {
+        beep(1175, 0.18, 0.05);
+      }, 120);
+    }
+
+    function playFailSound() {
+      beep(220, 0.25, 0.08);
+      setTimeout(function() {
+        beep(180, 0.25, 0.08);
+      }, 180);
+    }
+
+    function beep(frequency, duration, volume) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.value = frequency;
+        gainNode.gain.value = volume;
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        setTimeout(function() {
+          oscillator.stop();
+          audioCtx.close();
+        }, duration * 1000);
+      } catch (error) {}
+    }
+
+    function showWaiting(text) {
+      const box = document.getElementById('result');
+      box.className = 'result waiting';
+      box.innerHTML = text;
+    }
+
+    function showSuccess(text) {
+      const box = document.getElementById('result');
+      box.className = 'result success';
+      box.innerHTML = text;
+    }
+
+    function showFail(text) {
+      const box = document.getElementById('result');
+      box.className = 'result fail';
+      box.innerHTML = text;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    document.getElementById('statusText').textContent =
+      '연결 주소: ' + WEB_APP_URL;
+  </script>
+</body>
+</html>
