@@ -85,6 +85,18 @@
       gap: 12px;
     }
 
+    .notice {
+      margin-top: 14px;
+      padding: 13px;
+      border-radius: 16px;
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fed7aa;
+      font-size: 15px;
+      line-height: 1.45;
+      font-weight: 800;
+    }
+
     .consent {
       display: flex;
       align-items: flex-start;
@@ -248,11 +260,19 @@
         </div>
       </div>
 
-      <label for="consultantName">담당 상담사</label>
-      <input id="consultantName" type="text" placeholder="예: 진수 본부장">
+      <label for="consultantName">담당직원</label>
+      <input id="consultantName" type="text" placeholder="예: 김태성">
+
+      <label for="expectedVisitTime">방문예정시간</label>
+      <input id="expectedVisitTime" type="datetime-local">
+
+      <div class="notice">
+        방문예정시간은 고객이 다시 방문하기로 한 날짜와 시간입니다.<br>
+        고객등록시간은 자동으로 구글시트에 저장됩니다.
+      </div>
 
       <label for="memo">메모</label>
-      <textarea id="memo" placeholder="예: 모델하우스 재방문 희망, 투자상담, 실거주 상담 등"></textarea>
+      <textarea id="memo" placeholder="예: 홍보관 관람, 재방문 희망, 투자상담, 실거주 상담 등"></textarea>
 
       <div class="consent">
         <input id="consent" type="checkbox">
@@ -281,6 +301,7 @@
       const interestType = getValue('interestType');
       const visitPurpose = getValue('visitPurpose');
       const consultantName = getValue('consultantName');
+      const expectedVisitTime = formatDateTimeLocal(getValue('expectedVisitTime'));
       const memo = getValue('memo');
       const consent = document.getElementById('consent').checked ? 'Y' : 'N';
 
@@ -316,14 +337,15 @@
         if (result && result.success) {
           showSuccess(
             '<div class="big">' + escapeHtml(result.visitorName) + '님 방문 등록 완료</div>' +
-            '<div class="time">' + escapeHtml(result.visitTime || '') + '</div>'
+            '<div class="time">등록시간: ' + escapeHtml(result.registeredTime || '') + '</div>' +
+            '<div class="time">방문예정: ' + escapeHtml(result.expectedVisitTime || '-') + '</div>'
           );
 
           speakText(result.visitorName + '님 방문 등록이 완료되었습니다');
 
           setTimeout(function() {
             resetForm();
-          }, 2500);
+          }, 3000);
         } else {
           const message = result && result.message ? result.message : '방문 등록 실패';
           showFail(message);
@@ -340,6 +362,7 @@
         '&interestType=' + encodeURIComponent(interestType) +
         '&visitPurpose=' + encodeURIComponent(visitPurpose) +
         '&consultantName=' + encodeURIComponent(consultantName) +
+        '&expectedVisitTime=' + encodeURIComponent(expectedVisitTime) +
         '&memo=' + encodeURIComponent(memo) +
         '&consent=' + encodeURIComponent(consent) +
         '&callback=' + callbackName +
@@ -368,6 +391,7 @@
       document.getElementById('interestType').value = '';
       document.getElementById('visitPurpose').value = '';
       document.getElementById('consultantName').value = '';
+      document.getElementById('expectedVisitTime').value = '';
       document.getElementById('memo').value = '';
       document.getElementById('consent').checked = false;
 
@@ -377,6 +401,18 @@
 
     function getValue(id) {
       return document.getElementById(id).value.trim();
+    }
+
+    function formatDateTimeLocal(value) {
+      if (!value) return '';
+
+      let text = String(value).replace('T', ' ');
+
+      if (text.length === 16) {
+        text = text + ':00';
+      }
+
+      return text;
     }
 
     function focusField(id) {
