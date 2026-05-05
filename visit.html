@@ -1,1 +1,435 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>고객 방문등록</title>
 
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans KR", sans-serif;
+      background: #f4f7fb;
+      color: #111827;
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      margin-top: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #0f2e6e;
+      font-size: 34px;
+      text-align: center;
+      letter-spacing: -1px;
+    }
+
+    .sub {
+      margin-top: 8px;
+      color: #64748b;
+      font-size: 18px;
+      text-align: center;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    label {
+      display: block;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      color: #0f172a;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 2px solid #dbe3ef;
+      border-radius: 15px;
+      padding: 16px;
+      font-size: 20px;
+      font-weight: 700;
+      outline: none;
+      background: #ffffff;
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .consent {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 15px;
+      line-height: 1.45;
+      color: #334155;
+      font-weight: 700;
+    }
+
+    .consent input {
+      width: 24px;
+      height: 24px;
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 18px;
+      padding: 20px 14px;
+      margin-top: 18px;
+      font-size: 24px;
+      font-weight: 900;
+      cursor: pointer;
+      color: white;
+      background: #047857;
+      min-height: 68px;
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .reset {
+      background: #0f172a;
+      margin-top: 10px;
+      font-size: 20px;
+    }
+
+    .result {
+      display: block;
+      margin-top: 18px;
+      padding: 28px 16px;
+      border-radius: 22px;
+      text-align: center;
+      font-weight: 900;
+      line-height: 1.45;
+      min-height: 95px;
+      box-sizing: border-box;
+    }
+
+    .waiting {
+      background: #eff6ff;
+      color: #0f2e6e;
+      border: 3px solid #bfdbfe;
+    }
+
+    .success {
+      background: #16a34a;
+      color: white;
+      border: 4px solid #15803d;
+      box-shadow: 0 10px 28px rgba(22, 163, 74, 0.35);
+    }
+
+    .fail {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 3px solid #ef4444;
+    }
+
+    .big {
+      font-size: 34px;
+      word-break: keep-all;
+    }
+
+    .time {
+      margin-top: 8px;
+      font-size: 19px;
+      opacity: 0.95;
+    }
+
+    .small {
+      margin-top: 12px;
+      color: #64748b;
+      font-size: 12px;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 560px) {
+      .row {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      .big {
+        font-size: 29px;
+      }
+
+      input,
+      select,
+      textarea {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>고객 방문등록</h1>
+      <div class="sub">홍보관 방문 고객 정보를 입력해주세요.</div>
+
+      <div id="result" class="result waiting">
+        방문 등록 대기중
+      </div>
+
+      <label for="visitorName">고객명 *</label>
+      <input id="visitorName" type="text" placeholder="예: 홍길동" autocomplete="name">
+
+      <label for="phone">연락처 *</label>
+      <input id="phone" type="tel" placeholder="예: 010-1234-5678" autocomplete="tel">
+
+      <div class="row">
+        <div>
+          <label for="interestType">관심 타입</label>
+          <select id="interestType">
+            <option value="">선택</option>
+            <option value="84A">84A</option>
+            <option value="84B">84B</option>
+            <option value="84C">84C</option>
+            <option value="펜트하우스">펜트하우스</option>
+            <option value="상담 후 결정">상담 후 결정</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="visitPurpose">방문 목적</label>
+          <select id="visitPurpose">
+            <option value="">선택</option>
+            <option value="관심고객 등록">관심고객 등록</option>
+            <option value="청약 상담">청약 상담</option>
+            <option value="분양가 상담">분양가 상담</option>
+            <option value="동호수 상담">동호수 상담</option>
+            <option value="계약 상담">계약 상담</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="consultantName">담당 상담사</label>
+      <input id="consultantName" type="text" placeholder="예: 진수 본부장">
+
+      <label for="memo">메모</label>
+      <textarea id="memo" placeholder="예: 모델하우스 재방문 희망, 투자상담, 실거주 상담 등"></textarea>
+
+      <div class="consent">
+        <input id="consent" type="checkbox">
+        <div>
+          개인정보 수집 및 이용에 동의합니다. 입력한 정보는 방문상담, 분양상담, 안내 연락 목적으로 사용됩니다.
+        </div>
+      </div>
+
+      <button id="submitBtn" onclick="submitVisit()">방문 등록</button>
+      <button class="reset" onclick="resetForm()">새 고객 입력</button>
+
+      <div class="small" id="statusText"></div>
+    </div>
+  </div>
+
+  <script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxPDHypVwpaqEdAYUUAj8AGkgaEh4e0zEbp6cr46ru9JldynWDirfV9TpY6DB9JV6aO/exec';
+
+    let isSubmitting = false;
+
+    function submitVisit() {
+      if (isSubmitting) return;
+
+      const visitorName = getValue('visitorName');
+      const phone = getValue('phone');
+      const interestType = getValue('interestType');
+      const visitPurpose = getValue('visitPurpose');
+      const consultantName = getValue('consultantName');
+      const memo = getValue('memo');
+      const consent = document.getElementById('consent').checked ? 'Y' : 'N';
+
+      if (!visitorName) {
+        showFail('고객명을 입력해주세요.');
+        focusField('visitorName');
+        return;
+      }
+
+      if (!phone) {
+        showFail('연락처를 입력해주세요.');
+        focusField('phone');
+        return;
+      }
+
+      if (consent !== 'Y') {
+        showFail('개인정보 수집 및 이용 동의가 필요합니다.');
+        return;
+      }
+
+      isSubmitting = true;
+      document.getElementById('submitBtn').disabled = true;
+      showWaiting('방문 정보를 저장 중입니다...');
+
+      const callbackName = 'visitCallback_' + Date.now();
+
+      window[callbackName] = function(result) {
+        delete window[callbackName];
+
+        isSubmitting = false;
+        document.getElementById('submitBtn').disabled = false;
+
+        if (result && result.success) {
+          showSuccess(
+            '<div class="big">' + escapeHtml(result.visitorName) + '님 방문 등록 완료</div>' +
+            '<div class="time">' + escapeHtml(result.visitTime || '') + '</div>'
+          );
+
+          speakText(result.visitorName + '님 방문 등록이 완료되었습니다');
+
+          setTimeout(function() {
+            resetForm();
+          }, 2500);
+        } else {
+          const message = result && result.message ? result.message : '방문 등록 실패';
+          showFail(message);
+          speakText('방문 등록에 실패했습니다');
+        }
+      };
+
+      const script = document.createElement('script');
+      script.src =
+        WEB_APP_URL +
+        '?api=visit' +
+        '&visitorName=' + encodeURIComponent(visitorName) +
+        '&phone=' + encodeURIComponent(phone) +
+        '&interestType=' + encodeURIComponent(interestType) +
+        '&visitPurpose=' + encodeURIComponent(visitPurpose) +
+        '&consultantName=' + encodeURIComponent(consultantName) +
+        '&memo=' + encodeURIComponent(memo) +
+        '&consent=' + encodeURIComponent(consent) +
+        '&callback=' + callbackName +
+        '&t=' + Date.now();
+
+      script.onerror = function() {
+        showFail('서버 연결 실패');
+        speakText('서버 연결에 실패했습니다');
+        delete window[callbackName];
+        isSubmitting = false;
+        document.getElementById('submitBtn').disabled = false;
+      };
+
+      document.body.appendChild(script);
+
+      setTimeout(function() {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      }, 10000);
+    }
+
+    function resetForm() {
+      document.getElementById('visitorName').value = '';
+      document.getElementById('phone').value = '';
+      document.getElementById('interestType').value = '';
+      document.getElementById('visitPurpose').value = '';
+      document.getElementById('consultantName').value = '';
+      document.getElementById('memo').value = '';
+      document.getElementById('consent').checked = false;
+
+      showWaiting('방문 등록 대기중');
+      focusField('visitorName');
+    }
+
+    function getValue(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function focusField(id) {
+      setTimeout(function() {
+        document.getElementById(id).focus();
+      }, 100);
+    }
+
+    function speakText(text) {
+      try {
+        if (!window.speechSynthesis) return;
+
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        window.speechSynthesis.speak(utterance);
+      } catch (error) {}
+    }
+
+    function showWaiting(text) {
+      const box = document.getElementById('result');
+      box.className = 'result waiting';
+      box.innerHTML = text;
+    }
+
+    function showSuccess(text) {
+      const box = document.getElementById('result');
+      box.className = 'result success';
+      box.innerHTML = text;
+    }
+
+    function showFail(text) {
+      const box = document.getElementById('result');
+      box.className = 'result fail';
+      box.innerHTML = escapeHtml(text);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    document.getElementById('statusText').textContent =
+      '연결 주소: ' + WEB_APP_URL;
+  </script>
+</body>
+</html>
