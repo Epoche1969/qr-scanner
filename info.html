@@ -52,6 +52,13 @@
       line-height: 1.4;
     }
 
+    .voice-test {
+      margin-top: 14px;
+      background: #7c3aed;
+      font-size: 18px;
+      min-height: 54px;
+    }
+
     .tabs {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -200,16 +207,6 @@
       word-break: keep-all;
     }
 
-    .box {
-      margin-top: 14px;
-      padding: 16px;
-      border-radius: 18px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      line-height: 1.7;
-      font-weight: 800;
-    }
-
     .staff-box {
       margin-top: 14px;
       padding: 18px;
@@ -322,6 +319,8 @@
       <h1>인포 방문확인</h1>
       <div class="sub">직원 QR 확인 · 예약 방문확정 · 워킹 고객 등록</div>
 
+      <button class="voice-test" onclick="testVoice()">음성 테스트</button>
+
       <div id="mainResult" class="result waiting">
         인포 방문확인 대기중
       </div>
@@ -331,7 +330,6 @@
         <button id="tabWalking" class="tab" onclick="showSection('walking')">워킹 고객 등록</button>
       </div>
 
-      <!-- 고객확인 QR 스캔 -->
       <div id="sectionQrCheck" class="section active">
         <h2>고객확인 QR 스캔</h2>
 
@@ -416,7 +414,6 @@
         </div>
       </div>
 
-      <!-- 워킹 고객 등록 -->
       <div id="sectionWalking" class="section">
         <h2>워킹 고객 등록</h2>
 
@@ -476,6 +473,27 @@
     let scanTimer = null;
     let isScanningQr = false;
 
+    function speakText(text) {
+      try {
+        if (!window.speechSynthesis) return;
+
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.92;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        window.speechSynthesis.speak(utterance);
+      } catch (error) {}
+    }
+
+    function testVoice() {
+      speakText('인포 화면 음성 안내가 정상적으로 작동합니다.');
+      showWaiting('음성 테스트를 실행했습니다.');
+    }
+
     function showSection(name) {
       document.getElementById('sectionQrCheck').classList.remove('active');
       document.getElementById('sectionWalking').classList.remove('active');
@@ -486,12 +504,14 @@
       if (name === 'qrCheck') {
         document.getElementById('sectionQrCheck').classList.add('active');
         document.getElementById('tabQrCheck').classList.add('active');
+        speakText('고객확인 큐알 스캔 화면입니다.');
       }
 
       if (name === 'walking') {
         document.getElementById('sectionWalking').classList.add('active');
         document.getElementById('tabWalking').classList.add('active');
         stopScanner();
+        speakText('워킹 고객 등록 화면입니다.');
       }
 
       showWaiting('인포 방문확인 대기중');
@@ -534,11 +554,13 @@
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         showFail('이 브라우저는 카메라 기능을 지원하지 않습니다.');
+        speakText('이 브라우저는 카메라 기능을 지원하지 않습니다.');
         return;
       }
 
       stopScanner();
       showWaiting('카메라 시작 중...');
+      speakText('카메라를 시작합니다. 직원 큐알을 보여주세요.');
 
       navigator.mediaDevices.getUserMedia({
         video: {
@@ -555,10 +577,12 @@
       })
       .then(function() {
         showWaiting('카메라 준비 완료. 직원 QR을 보여주세요.');
+        speakText('카메라 준비가 완료되었습니다.');
         scanTimer = setInterval(scanFrame, 350);
       })
       .catch(function(error) {
         showFail('카메라 시작 실패: ' + error.name + ' / ' + error.message);
+        speakText('카메라 시작에 실패했습니다.');
       });
     }
 
@@ -613,6 +637,7 @@
 
       if (!qrData) {
         showFail('직원 QR토큰을 입력해주세요.');
+        speakText('직원 큐알 토큰을 입력해주세요.');
         focusField('manualQrToken');
         return;
       }
@@ -622,6 +647,7 @@
 
     function checkEmployeeQr(qrData) {
       showWaiting('직원 QR 확인 중입니다...');
+      speakText('직원 큐알을 확인 중입니다.');
 
       apiCall({
         api: 'employeeByQr',
@@ -640,9 +666,11 @@
             '<div class="small-line">고객 전체 연락처를 입력하고 예약 확인을 누르세요.</div>'
           );
 
+          speakText(name + ' 담당직원이 확인되었습니다. 고객 전체 연락처를 입력해주세요.');
           stopScanner();
         } else {
           showFail(result && result.message ? result.message : '직원 QR 확인 실패');
+          speakText('직원 큐알 확인에 실패했습니다.');
         }
       });
     }
@@ -653,11 +681,13 @@
 
       if (!consultantName) {
         showFail('먼저 직원 QR을 스캔해서 담당직원을 확인해주세요.');
+        speakText('먼저 직원 큐알을 스캔해서 담당직원을 확인해주세요.');
         return;
       }
 
       if (!phone) {
         showFail('고객 전체 연락처를 입력해주세요.');
+        speakText('고객 전체 연락처를 입력해주세요.');
         focusField('customerPhoneForSearch');
         return;
       }
@@ -666,6 +696,7 @@
       document.getElementById('onsiteBox').classList.remove('active');
 
       showWaiting('방문예약을 확인 중입니다...');
+      speakText('방문예약을 확인 중입니다.');
 
       apiCall({
         api: 'searchReservation',
@@ -674,11 +705,13 @@
       }, function(result) {
         if (!result || !result.success) {
           showFail(result && result.message ? result.message : '예약 검색 실패');
+          speakText('예약 검색에 실패했습니다.');
           return;
         }
 
         if (!result.found) {
           showWarn('방문예약이 없습니다. 직원QR 현장등록으로 저장할 수 있습니다.');
+          speakText('방문예약이 없습니다. 직원 큐알 현장등록으로 진행하세요.');
 
           document.getElementById('onsiteBox').classList.add('active');
           document.getElementById('onsitePhone').value = phone;
@@ -690,8 +723,10 @@
 
         if (matches.length === 1) {
           showSuccess('방문예약 1건이 확인되었습니다.');
+          speakText('방문예약이 확인되었습니다. 방문확정 버튼을 눌러주세요.');
         } else {
           showWarn('동일한 예약자가 여러 명 있습니다. 고객명을 확인 후 선택하세요.');
+          speakText('동일한 예약자가 여러 명 있습니다. 고객명을 확인 후 선택해주세요.');
         }
 
         renderReservationMatches(matches, phone);
@@ -723,15 +758,18 @@
 
       if (!reservationId) {
         showFail('예약ID가 없습니다.');
+        speakText('예약 아이디가 없습니다.');
         return;
       }
 
       if (!fullPhone) {
         showFail('고객 전체 연락처가 없습니다.');
+        speakText('고객 전체 연락처가 없습니다.');
         return;
       }
 
       showWaiting('예약 방문확정 처리 중입니다...');
+      speakText('예약 방문확정 처리 중입니다.');
 
       apiCall({
         api: 'confirmReservation',
@@ -747,9 +785,11 @@
             '<div class="small-line">등록시간: ' + escapeHtml(result.registeredTime || '') + '</div>'
           );
 
+          speakText(result.visitorName + '님 예약방문이 확정되었습니다.');
           resetQrCheckForm();
         } else {
           showFail(result && result.message ? result.message : '예약 방문확정 실패');
+          speakText('예약 방문확정에 실패했습니다.');
         }
       });
     }
@@ -764,22 +804,26 @@
 
       if (!consultantName) {
         showFail('담당직원이 확인되지 않았습니다. 직원 QR을 먼저 스캔해주세요.');
+        speakText('담당직원이 확인되지 않았습니다. 직원 큐알을 먼저 스캔해주세요.');
         return;
       }
 
       if (!visitorName) {
         showFail('고객명을 입력해주세요.');
+        speakText('고객명을 입력해주세요.');
         focusField('onsiteVisitorName');
         return;
       }
 
       if (!phone) {
         showFail('고객 연락처를 입력해주세요.');
+        speakText('고객 연락처를 입력해주세요.');
         focusField('onsitePhone');
         return;
       }
 
       showWaiting('직원QR 현장등록 저장 중입니다...');
+      speakText('직원 큐알 현장등록을 저장 중입니다.');
 
       apiCall({
         api: 'directVisit',
@@ -798,9 +842,11 @@
             '<div class="small-line">상태: 직원QR현장등록</div>'
           );
 
+          speakText(result.visitorName + '님 방문 저장이 완료되었습니다.');
           resetQrCheckForm();
         } else {
           showFail(result && result.message ? result.message : '직원QR 현장등록 실패');
+          speakText('직원 큐알 현장등록에 실패했습니다.');
         }
       });
     }
@@ -814,17 +860,20 @@
 
       if (!visitorName) {
         showFail('고객명을 입력해주세요.');
+        speakText('고객명을 입력해주세요.');
         focusField('walkingVisitorName');
         return;
       }
 
       if (!phone) {
         showFail('고객 연락처를 입력해주세요.');
+        speakText('고객 연락처를 입력해주세요.');
         focusField('walkingPhone');
         return;
       }
 
       showWaiting('워킹 고객 방문 저장 중입니다...');
+      speakText('워킹 고객 방문을 저장 중입니다.');
 
       apiCall({
         api: 'directVisit',
@@ -843,9 +892,11 @@
             '<div class="small-line">상태: 워킹방문</div>'
           );
 
+          speakText(result.visitorName + '님 워킹 방문 저장이 완료되었습니다.');
           resetWalkingForm();
         } else {
           showFail(result && result.message ? result.message : '워킹 방문 저장 실패');
+          speakText('워킹 방문 저장에 실패했습니다.');
         }
       });
     }
