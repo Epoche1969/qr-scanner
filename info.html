@@ -1,1 +1,901 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>인포 방문확인</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans KR", sans-serif;
+      background: #f4f7fb;
+      color: #111827;
+    }
+
+    .wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      margin-top: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #0f2e6e;
+      font-size: 34px;
+      text-align: center;
+      letter-spacing: -1px;
+    }
+
+    h2 {
+      margin: 0 0 12px 0;
+      color: #0f2e6e;
+      font-size: 23px;
+    }
+
+    .sub {
+      margin-top: 8px;
+      color: #64748b;
+      font-size: 18px;
+      text-align: center;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .tab {
+      background: #334155;
+      padding: 15px 8px;
+      font-size: 16px;
+      border-radius: 14px;
+    }
+
+    .tab.active {
+      background: #047857;
+    }
+
+    .section {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 8px;
+      color: #0f172a;
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 2px solid #dbe3ef;
+      border-radius: 15px;
+      padding: 15px;
+      font-size: 19px;
+      font-weight: 700;
+      outline: none;
+      background: #ffffff;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    input[readonly] {
+      background: #f1f5f9;
+      color: #0f2e6e;
+      border-color: #bfdbfe;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 18px;
+      padding: 18px 14px;
+      margin-top: 16px;
+      font-size: 22px;
+      font-weight: 900;
+      cursor: pointer;
+      color: white;
+      background: #047857;
+      min-height: 62px;
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .blue { background: #2563eb; }
+    .red { background: #dc2626; }
+    .dark { background: #0f172a; }
+    .gold { background: #b45309; }
+
+    .result {
+      display: block;
+      margin-top: 18px;
+      padding: 24px 16px;
+      border-radius: 22px;
+      text-align: center;
+      font-weight: 900;
+      line-height: 1.45;
+      min-height: 88px;
+      box-sizing: border-box;
+    }
+
+    .waiting {
+      background: #eff6ff;
+      color: #0f2e6e;
+      border: 3px solid #bfdbfe;
+    }
+
+    .success {
+      background: #16a34a;
+      color: white;
+      border: 4px solid #15803d;
+      box-shadow: 0 10px 28px rgba(22, 163, 74, 0.35);
+    }
+
+    .fail {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 3px solid #ef4444;
+    }
+
+    .warn {
+      background: #fff7ed;
+      color: #9a3412;
+      border: 3px solid #fed7aa;
+    }
+
+    .big {
+      font-size: 31px;
+      word-break: keep-all;
+    }
+
+    .small-line {
+      margin-top: 6px;
+      font-size: 17px;
+      opacity: 0.95;
+      word-break: keep-all;
+    }
+
+    .box {
+      margin-top: 14px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      line-height: 1.7;
+      font-weight: 800;
+    }
+
+    .match-card {
+      margin-top: 12px;
+      padding: 15px;
+      border-radius: 16px;
+      background: #eff6ff;
+      border: 2px solid #bfdbfe;
+      color: #0f2e6e;
+      font-weight: 800;
+      line-height: 1.65;
+    }
+
+    .match-card button {
+      margin-top: 10px;
+      font-size: 18px;
+      min-height: 54px;
+    }
+
+    video {
+      width: 100%;
+      margin-top: 14px;
+      border-radius: 18px;
+      background: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    .qr-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .hint {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 15px;
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fed7aa;
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 800;
+    }
+
+    .small {
+      margin-top: 12px;
+      color: #64748b;
+      font-size: 12px;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 640px) {
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      .big {
+        font-size: 27px;
+      }
+
+      input,
+      select,
+      textarea {
+        font-size: 17px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>인포 방문확인</h1>
+      <div class="sub">예약 확인 · 직원 QR 현장등록 · 워킹 고객 등록</div>
+
+      <div id="mainResult" class="result waiting">
+        인포 방문확인 대기중
+      </div>
+
+      <div class="tabs">
+        <button id="tabReservation" class="tab active" onclick="showSection('reservation')">예약 고객 확인</button>
+        <button id="tabStaffQr" class="tab" onclick="showSection('staffQr')">직원 QR 등록</button>
+        <button id="tabWalking" class="tab" onclick="showSection('walking')">워킹 고객 등록</button>
+      </div>
+
+      <!-- 예약 고객 확인 -->
+      <div id="sectionReservation" class="section active">
+        <h2>예약 고객 확인</h2>
+
+        <div class="hint">
+          고객의 전체 전화번호를 입력하면 뒤 6자리로 오늘 방문예약을 검색합니다.
+        </div>
+
+        <label for="reservationPhone">고객 전체 연락처 *</label>
+        <input id="reservationPhone" type="tel" placeholder="예: 010-1234-5678">
+
+        <label for="reservationMemo">인포 메모</label>
+        <textarea id="reservationMemo" placeholder="예: 도착 확인, 동반 1명, 주차 안내 완료 등"></textarea>
+
+        <button class="blue" onclick="searchReservation()">예약 검색</button>
+
+        <div id="reservationMatches"></div>
+      </div>
+
+      <!-- 직원 QR 현장등록 -->
+      <div id="sectionStaffQr" class="section">
+        <h2>직원 QR 현장등록</h2>
+
+        <div class="hint">
+          직원 등록 시 생성된 직원 QR을 스캔하면 담당직원이 자동 확인됩니다.
+        </div>
+
+        <video id="video" playsinline muted></video>
+        <canvas id="canvas"></canvas>
+
+        <div class="qr-buttons">
+          <button class="blue" onclick="startScanner()">직원 QR 스캔 시작</button>
+          <button class="red" onclick="stopScanner()">스캔 중지</button>
+        </div>
+
+        <label for="manualQrToken">직원 QR토큰 직접 입력</label>
+        <input id="manualQrToken" type="text" placeholder="예: EMP001-ABC12345">
+        <button class="dark" onclick="checkManualEmployeeQr()">직원 확인</button>
+
+        <div class="box">
+          담당직원: <span id="selectedStaffText">아직 확인 전</span>
+        </div>
+
+        <input id="staffConsultantName" type="hidden">
+
+        <label for="staffVisitorName">고객명 *</label>
+        <input id="staffVisitorName" type="text" placeholder="예: 홍길동">
+
+        <label for="staffPhone">고객 연락처 *</label>
+        <input id="staffPhone" type="tel" placeholder="예: 010-1234-5678">
+
+        <div class="row">
+          <div>
+            <label for="staffInterestType">관심 타입</label>
+            <select id="staffInterestType">
+              <option value="">선택</option>
+              <option value="59타입">59타입</option>
+              <option value="74타입">74타입</option>
+              <option value="84타입">84타입</option>
+              <option value="102타입">102타입</option>
+              <option value="펜트하우스">펜트하우스</option>
+              <option value="상담 후 결정">상담 후 결정</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="staffVisitPurpose">방문 목적</label>
+            <select id="staffVisitPurpose">
+              <option value="">선택</option>
+              <option value="관심고객 등록">관심고객 등록</option>
+              <option value="청약 상담">청약 상담</option>
+              <option value="분양가 상담">분양가 상담</option>
+              <option value="동호수 상담">동호수 상담</option>
+              <option value="계약 상담">계약 상담</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="staffMemo">메모</label>
+        <textarea id="staffMemo" placeholder="예: 직원 QR 지참 방문, 현장 상담 요청 등"></textarea>
+
+        <button onclick="submitStaffQrVisit()">직원QR 현장등록 저장</button>
+      </div>
+
+      <!-- 워킹 고객 직접등록 -->
+      <div id="sectionWalking" class="section">
+        <h2>워킹 고객 직접등록</h2>
+
+        <div class="hint">
+          직원 QR 없이 방문한 고객은 담당직원 “워킹”으로 저장됩니다.
+        </div>
+
+        <label for="walkingVisitorName">고객명 *</label>
+        <input id="walkingVisitorName" type="text" placeholder="예: 홍길동">
+
+        <label for="walkingPhone">고객 연락처 *</label>
+        <input id="walkingPhone" type="tel" placeholder="예: 010-1234-5678">
+
+        <div class="row">
+          <div>
+            <label for="walkingInterestType">관심 타입</label>
+            <select id="walkingInterestType">
+              <option value="">선택</option>
+              <option value="59타입">59타입</option>
+              <option value="74타입">74타입</option>
+              <option value="84타입">84타입</option>
+              <option value="102타입">102타입</option>
+              <option value="펜트하우스">펜트하우스</option>
+              <option value="상담 후 결정">상담 후 결정</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="walkingVisitPurpose">방문 목적</label>
+            <select id="walkingVisitPurpose">
+              <option value="">선택</option>
+              <option value="관심고객 등록">관심고객 등록</option>
+              <option value="청약 상담">청약 상담</option>
+              <option value="분양가 상담">분양가 상담</option>
+              <option value="동호수 상담">동호수 상담</option>
+              <option value="계약 상담">계약 상담</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="walkingMemo">메모</label>
+        <textarea id="walkingMemo" placeholder="예: 인포 직접등록, 워킹 방문, 상담 대기 등"></textarea>
+
+        <button class="gold" onclick="submitWalkingVisit()">워킹 방문 저장</button>
+      </div>
+
+      <div class="small" id="statusText"></div>
+    </div>
+  </div>
+
+  <script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxPDHypVwpaqEdAYUUAj8AGkgaEh4e0zEbp6cr46ru9JldynWDirfV9TpY6DB9JV6aO/exec';
+
+    let isSubmitting = false;
+    let videoStream = null;
+    let scanTimer = null;
+    let isScanningQr = false;
+
+    function showSection(name) {
+      document.getElementById('sectionReservation').classList.remove('active');
+      document.getElementById('sectionStaffQr').classList.remove('active');
+      document.getElementById('sectionWalking').classList.remove('active');
+
+      document.getElementById('tabReservation').classList.remove('active');
+      document.getElementById('tabStaffQr').classList.remove('active');
+      document.getElementById('tabWalking').classList.remove('active');
+
+      if (name === 'reservation') {
+        document.getElementById('sectionReservation').classList.add('active');
+        document.getElementById('tabReservation').classList.add('active');
+        stopScanner();
+      }
+
+      if (name === 'staffQr') {
+        document.getElementById('sectionStaffQr').classList.add('active');
+        document.getElementById('tabStaffQr').classList.add('active');
+      }
+
+      if (name === 'walking') {
+        document.getElementById('sectionWalking').classList.add('active');
+        document.getElementById('tabWalking').classList.add('active');
+        stopScanner();
+      }
+
+      showWaiting('인포 방문확인 대기중');
+    }
+
+    function apiCall(params, callback) {
+      const callbackName = 'infoCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+
+      window[callbackName] = function(result) {
+        delete window[callbackName];
+        callback(result);
+      };
+
+      const query = Object.keys(params).map(function(key) {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(params[key] || '');
+      }).join('&');
+
+      const script = document.createElement('script');
+      script.src = WEB_APP_URL + '?' + query + '&callback=' + callbackName + '&t=' + Date.now();
+
+      script.onerror = function() {
+        delete window[callbackName];
+        callback({
+          success: false,
+          message: '서버 연결 실패',
+        });
+      };
+
+      document.body.appendChild(script);
+
+      setTimeout(function() {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      }, 10000);
+    }
+
+    function searchReservation() {
+      const phone = getValue('reservationPhone');
+
+      if (!phone) {
+        showFail('고객 전체 연락처를 입력해주세요.');
+        focusField('reservationPhone');
+        return;
+      }
+
+      showWaiting('예약 정보를 검색 중입니다...');
+      document.getElementById('reservationMatches').innerHTML = '';
+
+      apiCall({
+        api: 'searchReservation',
+        phone: phone,
+      }, function(result) {
+        if (!result || !result.success) {
+          showFail(result && result.message ? result.message : '예약 검색 실패');
+          return;
+        }
+
+        if (!result.found) {
+          showWarn('오늘 예약 정보가 없습니다. 직원 QR 등록 또는 워킹 고객 등록을 이용하세요.');
+          document.getElementById('reservationMatches').innerHTML = '';
+          return;
+        }
+
+        showSuccess('예약 정보가 확인되었습니다.');
+
+        const matches = result.matches || [];
+
+        if (matches.length === 1) {
+          renderReservationMatches(matches, phone, true);
+        } else {
+          showWarn('동일한 뒤 6자리 예약자가 여러 명입니다. 고객명을 확인 후 선택하세요.');
+          renderReservationMatches(matches, phone, false);
+        }
+      });
+    }
+
+    function renderReservationMatches(matches, fullPhone, single) {
+      const box = document.getElementById('reservationMatches');
+
+      box.innerHTML = matches.map(function(item) {
+        return `
+          <div class="match-card">
+            <div><b>고객명:</b> ${escapeHtml(item.visitorName || '')}</div>
+            <div><b>담당직원:</b> ${escapeHtml(item.consultantName || '')}</div>
+            <div><b>관심타입:</b> ${escapeHtml(item.interestType || '')}</div>
+            <div><b>방문목적:</b> ${escapeHtml(item.visitPurpose || '')}</div>
+            <div><b>방문예정:</b> ${escapeHtml(item.expectedVisitTime || '')}</div>
+            <div><b>예약상태:</b> ${escapeHtml(item.reservationStatus || '')}</div>
+            <button onclick="confirmReservation('${escapeJs(item.reservationId || '')}', '${escapeJs(fullPhone || '')}')">
+              ${single ? '예약 방문확정' : '이 고객 방문확정'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function confirmReservation(reservationId, fullPhone) {
+      const memo = getValue('reservationMemo');
+
+      if (!reservationId) {
+        showFail('예약ID가 없습니다.');
+        return;
+      }
+
+      if (!fullPhone) {
+        showFail('고객 전체 연락처가 없습니다.');
+        return;
+      }
+
+      showWaiting('예약 방문확정 처리 중입니다...');
+
+      apiCall({
+        api: 'confirmReservation',
+        reservationId: reservationId,
+        phone: fullPhone,
+        memo: memo,
+      }, function(result) {
+        if (result && result.success) {
+          showSuccess(
+            '<div class="big">' + escapeHtml(result.visitorName) + '님 예약방문 확정</div>' +
+            '<div class="small-line">담당직원: ' + escapeHtml(result.consultantName || '') + '</div>' +
+            '<div class="small-line">등록시간: ' + escapeHtml(result.registeredTime || '') + '</div>'
+          );
+
+          document.getElementById('reservationPhone').value = '';
+          document.getElementById('reservationMemo').value = '';
+          document.getElementById('reservationMatches').innerHTML = '';
+        } else {
+          showFail(result && result.message ? result.message : '예약 방문확정 실패');
+        }
+      });
+    }
+
+    function startScanner() {
+      const video = document.getElementById('video');
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showFail('이 브라우저는 카메라 기능을 지원하지 않습니다.');
+        return;
+      }
+
+      stopScanner();
+      showWaiting('카메라 시작 중...');
+
+      navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      })
+      .then(function(stream) {
+        videoStream = stream;
+        video.srcObject = stream;
+        return video.play();
+      })
+      .then(function() {
+        showWaiting('카메라 준비 완료. 직원 QR을 보여주세요.');
+        scanTimer = setInterval(scanFrame, 350);
+      })
+      .catch(function(error) {
+        showFail('카메라 시작 실패: ' + error.name + ' / ' + error.message);
+      });
+    }
+
+    function stopScanner() {
+      if (scanTimer) {
+        clearInterval(scanTimer);
+        scanTimer = null;
+      }
+
+      if (videoStream) {
+        videoStream.getTracks().forEach(function(track) {
+          track.stop();
+        });
+        videoStream = null;
+      }
+
+      const video = document.getElementById('video');
+      if (video) {
+        video.srcObject = null;
+      }
+
+      isScanningQr = false;
+    }
+
+    function scanFrame() {
+      if (isScanningQr) return;
+
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
+
+      if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+      if (code && code.data) {
+        isScanningQr = true;
+        checkEmployeeQr(code.data);
+      }
+    }
+
+    function checkManualEmployeeQr() {
+      const qrData = getValue('manualQrToken');
+
+      if (!qrData) {
+        showFail('직원 QR토큰을 입력해주세요.');
+        focusField('manualQrToken');
+        return;
+      }
+
+      checkEmployeeQr(qrData);
+    }
+
+    function checkEmployeeQr(qrData) {
+      showWaiting('직원 QR 확인 중입니다...');
+
+      apiCall({
+        api: 'employeeByQr',
+        qrData: qrData,
+      }, function(result) {
+        isScanningQr = false;
+
+        if (result && result.success) {
+          const name = result.displayName || '';
+
+          document.getElementById('staffConsultantName').value = name;
+          document.getElementById('selectedStaffText').textContent = name + ' 담당직원 확인 완료';
+
+          showSuccess(
+            '<div class="big">' + escapeHtml(name) + ' 담당직원 확인</div>' +
+            '<div class="small-line">이제 고객 정보를 입력하고 저장하세요.</div>'
+          );
+
+          stopScanner();
+        } else {
+          showFail(result && result.message ? result.message : '직원 QR 확인 실패');
+        }
+      });
+    }
+
+    function submitStaffQrVisit() {
+      const consultantName = getValue('staffConsultantName');
+      const visitorName = getValue('staffVisitorName');
+      const phone = getValue('staffPhone');
+      const interestType = getValue('staffInterestType');
+      const visitPurpose = getValue('staffVisitPurpose');
+      const memo = getValue('staffMemo');
+
+      if (!consultantName) {
+        showFail('먼저 직원 QR을 스캔해서 담당직원을 확인해주세요.');
+        return;
+      }
+
+      if (!visitorName) {
+        showFail('고객명을 입력해주세요.');
+        focusField('staffVisitorName');
+        return;
+      }
+
+      if (!phone) {
+        showFail('고객 연락처를 입력해주세요.');
+        focusField('staffPhone');
+        return;
+      }
+
+      showWaiting('직원QR 현장등록 저장 중입니다...');
+
+      apiCall({
+        api: 'directVisit',
+        visitorName: visitorName,
+        phone: phone,
+        interestType: interestType,
+        visitPurpose: visitPurpose,
+        consultantName: consultantName,
+        status: '직원QR현장등록',
+        memo: memo,
+        consent: 'Y',
+      }, function(result) {
+        if (result && result.success) {
+          showSuccess(
+            '<div class="big">' + escapeHtml(result.visitorName) + '님 방문 저장 완료</div>' +
+            '<div class="small-line">담당직원: ' + escapeHtml(result.consultantName || '') + '</div>' +
+            '<div class="small-line">상태: 직원QR현장등록</div>'
+          );
+
+          resetStaffQrForm();
+        } else {
+          showFail(result && result.message ? result.message : '직원QR 현장등록 실패');
+        }
+      });
+    }
+
+    function submitWalkingVisit() {
+      const visitorName = getValue('walkingVisitorName');
+      const phone = getValue('walkingPhone');
+      const interestType = getValue('walkingInterestType');
+      const visitPurpose = getValue('walkingVisitPurpose');
+      const memo = getValue('walkingMemo');
+
+      if (!visitorName) {
+        showFail('고객명을 입력해주세요.');
+        focusField('walkingVisitorName');
+        return;
+      }
+
+      if (!phone) {
+        showFail('고객 연락처를 입력해주세요.');
+        focusField('walkingPhone');
+        return;
+      }
+
+      showWaiting('워킹 고객 방문 저장 중입니다...');
+
+      apiCall({
+        api: 'directVisit',
+        visitorName: visitorName,
+        phone: phone,
+        interestType: interestType,
+        visitPurpose: visitPurpose,
+        consultantName: '워킹',
+        status: '워킹방문',
+        memo: memo,
+        consent: 'Y',
+      }, function(result) {
+        if (result && result.success) {
+          showSuccess(
+            '<div class="big">' + escapeHtml(result.visitorName) + '님 워킹 방문 저장 완료</div>' +
+            '<div class="small-line">담당직원: 워킹</div>' +
+            '<div class="small-line">상태: 워킹방문</div>'
+          );
+
+          resetWalkingForm();
+        } else {
+          showFail(result && result.message ? result.message : '워킹 방문 저장 실패');
+        }
+      });
+    }
+
+    function resetStaffQrForm() {
+      document.getElementById('staffVisitorName').value = '';
+      document.getElementById('staffPhone').value = '';
+      document.getElementById('staffInterestType').value = '';
+      document.getElementById('staffVisitPurpose').value = '';
+      document.getElementById('staffMemo').value = '';
+      document.getElementById('manualQrToken').value = '';
+    }
+
+    function resetWalkingForm() {
+      document.getElementById('walkingVisitorName').value = '';
+      document.getElementById('walkingPhone').value = '';
+      document.getElementById('walkingInterestType').value = '';
+      document.getElementById('walkingVisitPurpose').value = '';
+      document.getElementById('walkingMemo').value = '';
+    }
+
+    function getValue(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function focusField(id) {
+      setTimeout(function() {
+        document.getElementById(id).focus();
+      }, 100);
+    }
+
+    function showWaiting(text) {
+      const box = document.getElementById('mainResult');
+      box.className = 'result waiting';
+      box.innerHTML = text;
+    }
+
+    function showSuccess(text) {
+      const box = document.getElementById('mainResult');
+      box.className = 'result success';
+      box.innerHTML = text;
+    }
+
+    function showFail(text) {
+      const box = document.getElementById('mainResult');
+      box.className = 'result fail';
+      box.innerHTML = escapeHtml(text);
+    }
+
+    function showWarn(text) {
+      const box = document.getElementById('mainResult');
+      box.className = 'result warn';
+      box.innerHTML = escapeHtml(text);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeJs(value) {
+      return String(value || '')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r');
+    }
+
+    document.getElementById('statusText').textContent =
+      '연결 주소: ' + WEB_APP_URL;
+  </script>
+</body>
+</html>
