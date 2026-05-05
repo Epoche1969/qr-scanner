@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>고객 방문등록</title>
+  <title>방문예약 등록</title>
 
   <style>
     body {
@@ -44,6 +44,31 @@
       line-height: 1.4;
     }
 
+    .staff-banner {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #ecfdf5;
+      color: #047857;
+      border: 2px solid #bbf7d0;
+      font-size: 20px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .notice {
+      margin-top: 14px;
+      padding: 13px;
+      border-radius: 16px;
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fed7aa;
+      font-size: 15px;
+      line-height: 1.45;
+      font-weight: 800;
+    }
+
     label {
       display: block;
       margin-top: 16px;
@@ -67,6 +92,12 @@
       background: #ffffff;
     }
 
+    input[readonly] {
+      background: #f1f5f9;
+      color: #0f2e6e;
+      border-color: #bfdbfe;
+    }
+
     textarea {
       min-height: 82px;
       resize: vertical;
@@ -83,40 +114,6 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-    }
-
-    .notice {
-      margin-top: 14px;
-      padding: 13px;
-      border-radius: 16px;
-      background: #fff7ed;
-      color: #9a3412;
-      border: 1px solid #fed7aa;
-      font-size: 15px;
-      line-height: 1.45;
-      font-weight: 800;
-    }
-
-    .consent {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      margin-top: 18px;
-      padding: 14px;
-      border-radius: 16px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      font-size: 15px;
-      line-height: 1.45;
-      color: #334155;
-      font-weight: 700;
-    }
-
-    .consent input {
-      width: 24px;
-      height: 24px;
-      margin-top: 2px;
-      flex: 0 0 auto;
     }
 
     button {
@@ -220,18 +217,37 @@
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>고객 방문등록</h1>
-      <div class="sub">홍보관 방문 고객 정보를 입력해주세요.</div>
+      <h1>방문예약 등록</h1>
+      <div class="sub">홍보관 방문 예정 고객을 사전 등록합니다.</div>
+
+      <div id="staffBanner" class="staff-banner"></div>
 
       <div id="result" class="result waiting">
-        방문 등록 대기중
+        방문예약 등록 대기중
+      </div>
+
+      <div class="notice">
+        이 화면은 실제 방문고객 저장이 아니라 <b>방문예약 고객 저장</b>입니다.<br>
+        저장된 예약은 인포 화면에서 고객 방문 시 확인 후 실제 방문기록으로 전환됩니다.
       </div>
 
       <label for="visitorName">고객명 *</label>
       <input id="visitorName" type="text" placeholder="예: 홍길동" autocomplete="name">
 
-      <label for="phone">연락처 *</label>
-      <input id="phone" type="tel" placeholder="예: 010-1234-5678" autocomplete="tel">
+      <label for="phoneLast6">전화번호 뒤 6자리 *</label>
+      <input
+        id="phoneLast6"
+        type="tel"
+        inputmode="numeric"
+        maxlength="6"
+        placeholder="예: 345678"
+        oninput="onlyDigits6(this)"
+      >
+
+      <div class="notice">
+        전체 전화번호가 아니라 <b>뒤 6자리만</b> 입력합니다.<br>
+        고객이 홍보관 방문 시 인포에서 전체 번호를 받아 뒤 6자리로 예약을 확인합니다.
+      </div>
 
       <div class="row">
         <div>
@@ -261,29 +277,17 @@
         </div>
       </div>
 
-      <label for="consultantName">담당직원</label>
+      <label for="consultantName">담당직원 *</label>
       <input id="consultantName" type="text" placeholder="예: 김태성">
 
-      <label for="expectedVisitTime">방문예정시간</label>
+      <label for="expectedVisitTime">방문예정시간 *</label>
       <input id="expectedVisitTime" type="datetime-local">
 
-      <div class="notice">
-        방문예정시간은 고객이 다시 방문하기로 한 날짜와 시간입니다.<br>
-        고객등록시간은 자동으로 구글시트에 저장됩니다.
-      </div>
-
       <label for="memo">메모</label>
-      <textarea id="memo" placeholder="예: 홍보관 관람, 재방문 희망, 투자상담, 실거주 상담 등"></textarea>
+      <textarea id="memo" placeholder="예: 오후 방문 예정, 84타입 관심, 가족 동반 예정 등"></textarea>
 
-      <div class="consent">
-        <input id="consent" type="checkbox">
-        <div>
-          개인정보 수집 및 이용에 동의합니다. 입력한 정보는 방문상담, 분양상담, 안내 연락 목적으로 사용됩니다.
-        </div>
-      </div>
-
-      <button id="submitBtn" onclick="submitVisit()">방문 등록</button>
-      <button class="reset" onclick="resetForm()">새 고객 입력</button>
+      <button id="submitBtn" onclick="submitReservation()">방문예약 등록</button>
+      <button class="reset" onclick="resetForm()">새 예약 입력</button>
 
       <div class="small" id="statusText"></div>
     </div>
@@ -293,18 +297,38 @@
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxPDHypVwpaqEdAYUUAj8AGkgaEh4e0zEbp6cr46ru9JldynWDirfV9TpY6DB9JV6aO/exec';
 
     let isSubmitting = false;
+    let fixedStaffName = '';
 
-    function submitVisit() {
+    function initPage() {
+      const params = new URLSearchParams(window.location.search);
+      const staff = params.get('staff');
+
+      if (staff) {
+        fixedStaffName = staff.trim();
+
+        const consultantInput = document.getElementById('consultantName');
+        consultantInput.value = fixedStaffName;
+        consultantInput.readOnly = true;
+
+        const banner = document.getElementById('staffBanner');
+        banner.style.display = 'block';
+        banner.textContent = fixedStaffName + ' 담당 방문예약 등록 화면';
+      }
+
+      document.getElementById('statusText').textContent =
+        '연결 주소: ' + WEB_APP_URL;
+    }
+
+    function submitReservation() {
       if (isSubmitting) return;
 
       const visitorName = getValue('visitorName');
-      const phone = getValue('phone');
+      const phoneLast6 = getValue('phoneLast6');
       const interestType = getValue('interestType');
       const visitPurpose = getValue('visitPurpose');
-      const consultantName = getValue('consultantName');
+      const consultantName = fixedStaffName || getValue('consultantName');
       const expectedVisitTime = formatDateTimeLocal(getValue('expectedVisitTime'));
       const memo = getValue('memo');
-      const consent = document.getElementById('consent').checked ? 'Y' : 'N';
 
       if (!visitorName) {
         showFail('고객명을 입력해주세요.');
@@ -312,22 +336,29 @@
         return;
       }
 
-      if (!phone) {
-        showFail('연락처를 입력해주세요.');
-        focusField('phone');
+      if (!phoneLast6 || phoneLast6.length !== 6) {
+        showFail('전화번호 뒤 6자리를 정확히 입력해주세요.');
+        focusField('phoneLast6');
         return;
       }
 
-      if (consent !== 'Y') {
-        showFail('개인정보 수집 및 이용 동의가 필요합니다.');
+      if (!consultantName) {
+        showFail('담당직원을 입력해주세요.');
+        focusField('consultantName');
+        return;
+      }
+
+      if (!expectedVisitTime) {
+        showFail('방문예정시간을 입력해주세요.');
+        focusField('expectedVisitTime');
         return;
       }
 
       isSubmitting = true;
       document.getElementById('submitBtn').disabled = true;
-      showWaiting('방문 정보를 저장 중입니다...');
+      showWaiting('방문예약 정보를 저장 중입니다...');
 
-      const callbackName = 'visitCallback_' + Date.now();
+      const callbackName = 'reserveCallback_' + Date.now();
 
       window[callbackName] = function(result) {
         delete window[callbackName];
@@ -337,35 +368,35 @@
 
         if (result && result.success) {
           showSuccess(
-            '<div class="big">' + escapeHtml(result.visitorName) + '님 방문 등록 완료</div>' +
-            '<div class="time">등록시간: ' + escapeHtml(result.registeredTime || '') + '</div>' +
-            '<div class="time">방문예정: ' + escapeHtml(result.expectedVisitTime || '-') + '</div>'
+            '<div class="big">' + escapeHtml(result.visitorName) + '님 방문예약 완료</div>' +
+            '<div class="time">담당직원: ' + escapeHtml(result.consultantName || consultantName) + '</div>' +
+            '<div class="time">방문예정: ' + escapeHtml(result.expectedVisitTime || '-') + '</div>' +
+            '<div class="time">상태: 예약</div>'
           );
 
-          speakText(result.visitorName + '님 방문 등록이 완료되었습니다');
+          speakText(result.visitorName + '님 방문예약이 등록되었습니다');
 
           setTimeout(function() {
             resetForm();
           }, 3000);
         } else {
-          const message = result && result.message ? result.message : '방문 등록 실패';
+          const message = result && result.message ? result.message : '방문예약 등록 실패';
           showFail(message);
-          speakText('방문 등록에 실패했습니다');
+          speakText('방문예약 등록에 실패했습니다');
         }
       };
 
       const script = document.createElement('script');
       script.src =
         WEB_APP_URL +
-        '?api=visit' +
+        '?api=reserveVisit' +
         '&visitorName=' + encodeURIComponent(visitorName) +
-        '&phone=' + encodeURIComponent(phone) +
+        '&phoneLast6=' + encodeURIComponent(phoneLast6) +
         '&interestType=' + encodeURIComponent(interestType) +
         '&visitPurpose=' + encodeURIComponent(visitPurpose) +
         '&consultantName=' + encodeURIComponent(consultantName) +
         '&expectedVisitTime=' + encodeURIComponent(expectedVisitTime) +
         '&memo=' + encodeURIComponent(memo) +
-        '&consent=' + encodeURIComponent(consent) +
         '&callback=' + callbackName +
         '&t=' + Date.now();
 
@@ -388,16 +419,25 @@
 
     function resetForm() {
       document.getElementById('visitorName').value = '';
-      document.getElementById('phone').value = '';
+      document.getElementById('phoneLast6').value = '';
       document.getElementById('interestType').value = '';
       document.getElementById('visitPurpose').value = '';
-      document.getElementById('consultantName').value = '';
+
+      if (fixedStaffName) {
+        document.getElementById('consultantName').value = fixedStaffName;
+      } else {
+        document.getElementById('consultantName').value = '';
+      }
+
       document.getElementById('expectedVisitTime').value = '';
       document.getElementById('memo').value = '';
-      document.getElementById('consent').checked = false;
 
-      showWaiting('방문 등록 대기중');
+      showWaiting('방문예약 등록 대기중');
       focusField('visitorName');
+    }
+
+    function onlyDigits6(input) {
+      input.value = input.value.replace(/[^0-9]/g, '').slice(0, 6);
     }
 
     function getValue(id) {
@@ -465,8 +505,7 @@
         .replace(/'/g, '&#039;');
     }
 
-    document.getElementById('statusText').textContent =
-      '연결 주소: ' + WEB_APP_URL;
+    initPage();
   </script>
 </body>
 </html>
