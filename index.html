@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>출첵 스캐너</title>
 
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -16,125 +16,139 @@
     }
 
     .wrap {
-      max-width: 720px;
+      max-width: 760px;
       margin: 0 auto;
-      padding: 16px;
+      padding: 18px;
     }
 
     .card {
-      background: white;
+      background: #ffffff;
       border-radius: 20px;
-      padding: 20px;
+      padding: 24px;
       box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-      margin-top: 12px;
+      margin-top: 18px;
     }
 
     h1 {
       margin: 0;
       color: #0f2e6e;
-      font-size: 34px;
-      text-align: center;
+      font-size: 32px;
+      letter-spacing: -1px;
     }
 
     .sub {
       margin-top: 8px;
       color: #64748b;
-      font-size: 18px;
-      text-align: center;
+      font-size: 17px;
+      line-height: 1.5;
       font-weight: 700;
+    }
+
+    .camera-box {
+      margin-top: 20px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #0f172a;
+      border: 1px solid #cbd5e1;
     }
 
     video {
       width: 100%;
-      margin-top: 18px;
-      border-radius: 18px;
+      min-height: 260px;
+      display: block;
       background: #0f172a;
-      border: 1px solid #cbd5e1;
+      object-fit: cover;
+    }
+
+    video.front-camera {
+      transform: scaleX(-1);
     }
 
     canvas {
       display: none;
     }
 
-    .buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      flex: 1;
-      border: 0;
-      border-radius: 14px;
-      padding: 16px;
-      font-size: 18px;
-      font-weight: 900;
-      cursor: pointer;
-      color: white;
-    }
-
-    .voice { background: #111827; }
-    .start { background: #047857; }
-    .stop { background: #dc2626; }
-    .manual-btn { background: #2563eb; }
-
     .result {
       display: block;
-      margin-top: 18px;
-      padding: 30px 18px;
-      border-radius: 20px;
+      margin-top: 20px;
+      padding: 26px 18px;
+      border-radius: 18px;
       text-align: center;
       font-weight: 900;
-      line-height: 1.45;
-      min-height: 110px;
+      line-height: 1.5;
+      background: #eff6ff;
+      color: #0f2e6e;
+      border: 2px solid #bfdbfe;
+      min-height: 72px;
+      box-sizing: border-box;
     }
 
     .success {
-      background: #16a34a;
-      color: white;
-      border: 4px solid #15803d;
-      box-shadow: 0 10px 28px rgba(22, 163, 74, 0.35);
-    }
-
-    .duplicate {
-      background: #dc2626;
-      color: white;
-      border: 4px solid #991b1b;
-      box-shadow: 0 10px 28px rgba(220, 38, 38, 0.35);
+      background: #ecfdf5;
+      color: #047857;
+      border-color: #22c55e;
     }
 
     .fail {
       background: #fef2f2;
       color: #dc2626;
-      border: 3px solid #ef4444;
+      border-color: #ef4444;
     }
 
     .waiting {
       background: #eff6ff;
       color: #0f2e6e;
-      border: 3px solid #bfdbfe;
+      border-color: #bfdbfe;
     }
 
     .big-name {
-      font-size: 36px;
-      margin-bottom: 10px;
+      font-size: 34px;
+      margin-bottom: 8px;
     }
 
     .big-type {
-      font-size: 38px;
-      margin-bottom: 10px;
+      font-size: 40px;
+      margin-bottom: 8px;
     }
 
     .big-time {
-      font-size: 22px;
-      color: inherit;
-      opacity: 0.95;
+      font-size: 20px;
+      color: #334155;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      color: #ffffff;
+      min-height: 54px;
+    }
+
+    .check-in { background: #2563eb; }
+    .check-out { background: #7c3aed; }
+    .start { background: #047857; }
+    .stop { background: #dc2626; }
+    .camera { background: #334155; }
+    .manual-btn { background: #2563eb; width: 100%; }
+
+    .active-mode {
+      outline: 4px solid #fbbf24;
+      outline-offset: 0;
     }
 
     .manual {
-      margin-top: 20px;
-      padding: 16px;
+      margin-top: 24px;
+      padding: 18px;
       border-radius: 16px;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -159,8 +173,27 @@
     .small {
       margin-top: 14px;
       color: #64748b;
-      font-size: 12px;
+      font-size: 13px;
       word-break: break-all;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 520px) {
+      .button-grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .big-name {
+        font-size: 28px;
+      }
+
+      .big-type {
+        font-size: 34px;
+      }
     }
   </style>
 </head>
@@ -169,22 +202,28 @@
   <div class="wrap">
     <div class="card">
       <h1>출첵 스캐너</h1>
-      <div class="sub">직원 QR을 카메라에 보여주세요.</div>
+      <div class="sub">전면 카메라 기본 사용. 직원 QR을 태블릿 화면 쪽 카메라에 보여주세요.</div>
 
-      <div class="buttons">
-        <button class="voice" onclick="unlockAudio()">음성 안내 시작</button>
+      <div class="camera-box">
+        <video id="video" class="front-camera" playsinline muted></video>
       </div>
-
-      <video id="video" playsinline muted></video>
       <canvas id="canvas"></canvas>
 
-      <div id="result" class="result waiting">
-        스캔 대기중
+      <div id="result" class="result waiting">스캔 시작 버튼을 눌러주세요.</div>
+
+      <div class="button-grid">
+        <button id="checkInButton" class="check-in active-mode" onclick="setCheckType('출근')">출근 모드</button>
+        <button id="checkOutButton" class="check-out" onclick="setCheckType('퇴근')">퇴근 모드</button>
       </div>
 
-      <div class="buttons">
+      <div class="button-grid">
         <button class="start" onclick="startScanner()">스캔 시작</button>
         <button class="stop" onclick="stopScanner()">스캔 중지</button>
+      </div>
+
+      <div class="button-grid">
+        <button class="camera" onclick="switchCamera('user')">전면 카메라</button>
+        <button class="camera" onclick="switchCamera('environment')">후면 카메라</button>
       </div>
 
       <div class="manual">
@@ -205,63 +244,85 @@
     let isProcessing = false;
     let lastToken = '';
     let lastScanTime = 0;
-    let audioCtx = null;
+    let checkType = '출근';
+    let cameraFacingMode = 'user';
 
-    function unlockAudio() {
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!audioCtx) {
-          audioCtx = new AudioContext();
-        }
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
+    function setCheckType(type) {
+      checkType = type === '퇴근' ? '퇴근' : '출근';
 
-        beep(880, 0.08, 0.04);
-        speakText('음성 안내가 시작되었습니다');
-        showWaiting('음성 안내 준비 완료. 스캔 시작을 눌러주세요.');
-      } catch (error) {
-        speakText('음성 안내가 시작되었습니다');
-      }
+      document.getElementById('checkInButton').classList.toggle('active-mode', checkType === '출근');
+      document.getElementById('checkOutButton').classList.toggle('active-mode', checkType === '퇴근');
+
+      showWaiting(checkType + ' 모드입니다. QR을 스캔해주세요.');
+      speak(checkType + ' 모드입니다.');
+    }
+
+    function switchCamera(mode) {
+      cameraFacingMode = mode === 'environment' ? 'environment' : 'user';
+      speak(cameraFacingMode === 'user' ? '전면 카메라로 전환합니다.' : '후면 카메라로 전환합니다.');
+      startScanner();
     }
 
     function startScanner() {
-      unlockAudio();
-
+      unlockSound();
       const video = document.getElementById('video');
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         showFail('이 브라우저는 카메라 기능을 지원하지 않습니다.');
+        speak('카메라 기능을 지원하지 않습니다.');
         return;
       }
 
-      stopScanner();
+      stopScanner(false);
       showWaiting('카메라 시작 중...');
+      setCameraDisplayMode();
 
-      navigator.mediaDevices.getUserMedia({
+      const constraints = {
         video: {
-          facingMode: { ideal: 'environment' },
+          facingMode: { ideal: cameraFacingMode },
           width: { ideal: 1280 },
           height: { ideal: 720 }
         },
         audio: false
-      })
-      .then(function(stream) {
-        videoStream = stream;
-        video.srcObject = stream;
-        return video.play();
-      })
-      .then(function() {
-        showWaiting('카메라 준비 완료. QR을 보여주세요.');
-        scanTimer = setInterval(scanFrame, 350);
-      })
-      .catch(function(error) {
-        playFailSound();
-        showFail('카메라 시작 실패: ' + error.name + ' / ' + error.message);
-      });
+      };
+
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then(function(stream) {
+          videoStream = stream;
+          video.srcObject = stream;
+          return video.play();
+        })
+        .then(function() {
+          showWaiting(getCameraName() + ' 준비 완료. ' + checkType + ' QR을 보여주세요.');
+          scanTimer = setInterval(scanFrame, 300);
+        })
+        .catch(function(error) {
+          startScannerFallback(error);
+        });
     }
 
-    function stopScanner() {
+    function startScannerFallback(originalError) {
+      const video = document.getElementById('video');
+      showWaiting('기본 카메라로 다시 시도 중...');
+
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(function(stream) {
+          videoStream = stream;
+          video.srcObject = stream;
+          return video.play();
+        })
+        .then(function() {
+          showWaiting('카메라 준비 완료. QR을 보여주세요.');
+          scanTimer = setInterval(scanFrame, 300);
+        })
+        .catch(function(error) {
+          playFailSound();
+          showFail('카메라 시작 실패: ' + (originalError ? originalError.name : error.name) + ' / ' + error.message);
+          speak('카메라 시작에 실패했습니다. 권한을 확인해주세요.');
+        });
+    }
+
+    function stopScanner(showMessage) {
       if (scanTimer) {
         clearInterval(scanTimer);
         scanTimer = null;
@@ -278,6 +339,11 @@
       if (video) {
         video.srcObject = null;
       }
+
+      if (showMessage !== false) {
+        showWaiting('스캔이 중지되었습니다.');
+        speak('스캔이 중지되었습니다.');
+      }
     }
 
     function scanFrame() {
@@ -286,9 +352,8 @@
       const video = document.getElementById('video');
       const canvas = document.getElementById('canvas');
 
-      if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
-        return;
-      }
+      if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) return;
+      if (!video.videoWidth || !video.videoHeight) return;
 
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -297,7 +362,9 @@
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert'
+      });
 
       if (code && code.data) {
         recordAttendance(code.data);
@@ -305,13 +372,13 @@
     }
 
     function submitManual() {
-      unlockAudio();
-
+      unlockSound();
       const token = document.getElementById('manualToken').value.trim();
 
       if (!token) {
         playFailSound();
         showFail('QR토큰을 입력해주세요.');
+        speak('큐알 토큰을 입력해주세요.');
         return;
       }
 
@@ -322,14 +389,10 @@
       const now = Date.now();
 
       if (isProcessing) return;
-
-      if (token === lastToken && now - lastScanTime < 5000) {
-        return;
-      }
+      if (token === lastToken && now - lastScanTime < 5000) return;
 
       lastToken = token;
       lastScanTime = now;
-
       isProcessing = true;
       showWaiting('QR 확인 중...');
 
@@ -339,39 +402,33 @@
         delete window[callbackName];
 
         if (result && result.success) {
-          const name = result.displayName || result.name || '직원';
-          const checkType = result.checkType || '출근';
-          const scanTime = result.scanTime || '';
-
-          playSuccessVoice(name, checkType);
-
+          playSuccessSound();
+          const name = result.displayName || '직원';
+          const type = result.checkType || checkType;
+          speak(name + '님 ' + type + '했습니다.');
           showSuccess(
             '<div class="big-name">' + escapeHtml(name) + '님</div>' +
-            '<div class="big-type">정상 ' + escapeHtml(checkType) + ' 처리되었습니다</div>' +
-            '<div class="big-time">' + escapeHtml(scanTime) + '</div>'
+            '<div class="big-type">' + escapeHtml(type) + '했습니다</div>' +
+            '<div class="big-time">' + escapeHtml(result.scanTime || '') + '</div>'
           );
+          document.getElementById('manualToken').value = '';
         } else {
-          if (isDuplicateResult(result)) {
-            const name = result && (result.displayName || result.name) ? (result.displayName || result.name) : '';
-            const scanTime = result && result.scanTime ? result.scanTime : '';
+          playFailSound();
+          const message = result && result.message ? result.message : '출첵 실패';
+          const name = result && result.displayName ? result.displayName : '';
 
-            playDuplicateWarning(name);
-
-            showDuplicate(
-              '<div class="big-name">' + escapeHtml(name ? name + '님' : '중복 출첵') + '</div>' +
-              '<div class="big-type">이미 출근 처리된 직원입니다</div>' +
-              '<div class="big-time">' + escapeHtml(scanTime) + '</div>'
-            );
+          if (result && result.duplicate && name) {
+            speak(name + '님은 이미 ' + (result.checkType || checkType) + ' 처리되었습니다.');
           } else {
-            playFailSound();
-            speakText('출첵 처리에 실패했습니다');
-            showFail(result && result.message ? result.message : '출첵 실패');
+            speak(message);
           }
+
+          showFail(message);
         }
 
         setTimeout(function() {
           isProcessing = false;
-          showWaiting('다음 직원 스캔 대기중');
+          showWaiting('다음 직원 ' + checkType + ' 스캔 대기중');
         }, 3000);
       };
 
@@ -380,12 +437,13 @@
         WEB_APP_URL +
         '?api=attendance' +
         '&token=' + encodeURIComponent(token) +
+        '&checkType=' + encodeURIComponent(checkType) +
         '&callback=' + callbackName +
         '&t=' + Date.now();
 
       script.onerror = function() {
         playFailSound();
-        speakText('서버 연결에 실패했습니다');
+        speak('서버 연결 실패');
         showFail('서버 연결 실패');
         delete window[callbackName];
         isProcessing = false;
@@ -400,117 +458,38 @@
       }, 10000);
     }
 
-    function isDuplicateResult(result) {
-      if (!result) return false;
-
-      const message = String(result.message || '');
-      const status = String(result.status || '');
-      const code = String(result.code || '');
-
-      return (
-        result.duplicate === true ||
-        result.isDuplicate === true ||
-        status.includes('duplicate') ||
-        code.includes('duplicate') ||
-        message.includes('이미') ||
-        message.includes('중복') ||
-        message.includes('처리된') ||
-        message.includes('출근 처리')
-      );
+    function setCameraDisplayMode() {
+      const video = document.getElementById('video');
+      if (!video) return;
+      video.classList.toggle('front-camera', cameraFacingMode === 'user');
     }
 
-    function speakText(text) {
-      try {
-        if (!window.speechSynthesis) return;
-
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ko-KR';
-        utterance.rate = 0.9;
-        utterance.pitch = 1;
-        utterance.volume = 1;
-
-        window.speechSynthesis.speak(utterance);
-      } catch (error) {}
-    }
-
-    function playSuccessVoice(name, checkType) {
-      try {
-        if (navigator.vibrate) {
-          navigator.vibrate([150, 70, 150]);
-        }
-
-        playSuccessSound();
-
-        const displayName = name || '직원';
-        const type = checkType || '출근';
-        speakText(displayName + '님 정상 ' + type + ' 처리되었습니다');
-      } catch (error) {
-        speakText('정상 출근 처리되었습니다');
-      }
-    }
-
-    function playDuplicateWarning(name) {
-      try {
-        if (navigator.vibrate) {
-          navigator.vibrate([100, 60, 100, 60, 250]);
-        }
-
-        playWarningSound();
-
-        setTimeout(function() {
-          if (name) {
-            speakText(name + '님 이미 출근 처리된 직원입니다');
-          } else {
-            speakText('이미 출근 처리된 직원입니다');
-          }
-        }, 700);
-      } catch (error) {
-        speakText('이미 출근 처리된 직원입니다');
-      }
+    function getCameraName() {
+      return cameraFacingMode === 'user' ? '전면 카메라' : '후면 카메라';
     }
 
     function playSuccessSound() {
       beep(880, 0.12, 0.06);
-      setTimeout(function() {
-        beep(1175, 0.18, 0.06);
-      }, 120);
+      setTimeout(function() { beep(1175, 0.18, 0.06); }, 120);
     }
 
     function playFailSound() {
       beep(220, 0.25, 0.08);
-      setTimeout(function() {
-        beep(180, 0.25, 0.08);
-      }, 180);
+      setTimeout(function() { beep(180, 0.25, 0.08); }, 180);
     }
 
-    function playWarningSound() {
-      beep(440, 0.16, 0.09, 'square');
-      setTimeout(function() {
-        beep(440, 0.16, 0.09, 'square');
-      }, 210);
-      setTimeout(function() {
-        beep(330, 0.22, 0.09, 'square');
-      }, 420);
+    function unlockSound() {
+      beep(1, 0.01, 0.001);
     }
 
-    function beep(frequency, duration, volume, type) {
+    function beep(frequency, duration, volume) {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-
-        if (!audioCtx) {
-          audioCtx = new AudioContext();
-        }
-
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-
+        const audioCtx = new AudioContext();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
 
-        oscillator.type = type || 'sine';
+        oscillator.type = 'sine';
         oscillator.frequency.value = frequency;
         gainNode.gain.value = volume;
 
@@ -518,10 +497,23 @@
         gainNode.connect(audioCtx.destination);
 
         oscillator.start();
-
         setTimeout(function() {
           oscillator.stop();
+          audioCtx.close();
         }, duration * 1000);
+      } catch (error) {}
+    }
+
+    function speak(text) {
+      try {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.95;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        window.speechSynthesis.speak(utterance);
       } catch (error) {}
     }
 
@@ -534,12 +526,6 @@
     function showSuccess(text) {
       const box = document.getElementById('result');
       box.className = 'result success';
-      box.innerHTML = text;
-    }
-
-    function showDuplicate(text) {
-      const box = document.getElementById('result');
-      box.className = 'result duplicate';
       box.innerHTML = text;
     }
 
@@ -559,7 +545,7 @@
     }
 
     document.getElementById('statusText').textContent =
-      '연결 주소: ' + WEB_APP_URL;
+      '현재 기본 카메라: 전면 카메라 / 연결 주소: ' + WEB_APP_URL;
   </script>
 </body>
 </html>
