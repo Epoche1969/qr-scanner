@@ -50,6 +50,10 @@
       overflow: hidden;
       background: #0f172a;
       border: 1px solid #cbd5e1;
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     video {
@@ -140,6 +144,7 @@
     .stop { background: #dc2626; }
     .camera { background: #334155; }
     .manual-btn { background: #2563eb; width: 100%; }
+    .reset-btn { background: #b45309; width: 100%; margin-top: 10px; }
 
     .active-mode {
       outline: 4px solid #fbbf24;
@@ -176,6 +181,7 @@
       font-size: 13px;
       word-break: break-all;
       line-height: 1.5;
+      white-space: pre-line;
     }
 
     @media (max-width: 520px) {
@@ -202,10 +208,10 @@
   <div class="wrap">
     <div class="card">
       <h1>출첵 스캐너</h1>
-      <div class="sub">전면 카메라 기본 사용. 직원 QR을 태블릿 화면 쪽 카메라에 보여주세요.</div>
+      <div class="sub">전면 카메라 우선 사용. 반드시 “스캔 시작”을 눌러 카메라 권한을 허용해주세요.</div>
 
       <div class="camera-box">
-        <video id="video" class="front-camera" playsinline muted></video>
+        <video id="video" class="front-camera" autoplay playsinline muted></video>
       </div>
       <canvas id="canvas"></canvas>
 
@@ -217,14 +223,16 @@
       </div>
 
       <div class="button-grid">
-        <button class="start" onclick="startScanner()">스캔 시작</button>
+        <button class="start" onclick="startScanner('user')">스캔 시작</button>
         <button class="stop" onclick="stopScanner()">스캔 중지</button>
       </div>
 
       <div class="button-grid">
-        <button class="camera" onclick="switchCamera('user')">전면 카메라</button>
-        <button class="camera" onclick="switchCamera('environment')">후면 카메라</button>
+        <button class="camera" onclick="startScanner('user')">전면 카메라 재시도</button>
+        <button class="camera" onclick="startScanner('environment')">후면 카메라 재시도</button>
       </div>
+
+      <button class="reset-btn" onclick="resetCameraGuide()">카메라 권한 안내</button>
 
       <div class="manual">
         <h2>카메라가 안 될 때 직접 입력</h2>
@@ -246,6 +254,7 @@
     let lastScanTime = 0;
     let checkType = '출근';
     let cameraFacingMode = 'user';
+    let currentCameraLabel = '';
 
     function setCheckType(type) {
       checkType = type === '퇴근' ? '퇴근' : '출근';
@@ -253,73 +262,87 @@
       document.getElementById('checkInButton').classList.toggle('active-mode', checkType === '출근');
       document.getElementById('checkOutButton').classList.toggle('active-mode', checkType === '퇴근');
 
-      showWaiting(checkType + ' 모드입니다. QR을 스캔해주세요.');
+      showWaiting(checkType + ' 모드입니다. 카메라가 안 켜졌으면 스캔 시작을 눌러주세요.');
       speak(checkType + ' 모드입니다.');
     }
 
-    function switchCamera(mode) {
-      cameraFacingMode = mode === 'environment' ? 'environment' : 'user';
-      speak(cameraFacingMode === 'user' ? '전면 카메라로 전환합니다.' : '후면 카메라로 전환합니다.');
-      startScanner();
-    }
-
-    function startScanner() {
+    async function startScanner(mode) {
       unlockSound();
-      const video = document.getElementById('video');
+      cameraFacingMode = mode === 'environment' ? 'environment' : 'user';
+      setCameraDisplayMode();
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showFail('이 브라우저는 카메라 기능을 지원하지 않습니다.');
-        speak('카메라 기능을 지원하지 않습니다.');
+        showFail('이 브라우저는 카메라 기능을 지원하지 않습니다. Chrome 또는 Safari 최신 버전으로 열어주세요.');
+        speak('이 브라우저는 카메라 기능을 지원하지 않습니다.');
         return;
       }
 
       stopScanner(false);
-      showWaiting('카메라 시작 중...');
-      setCameraDisplayMode();
+      showWaiting(getCameraName() + ' 시작 중입니다. 권한 창이 뜨면 허용을 눌러주세요.');
+      setStatus('카메라 요청 중...');
 
-      const constraints = {
-        video: {
-          facingMode: { ideal: cameraFacingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      };
+      const attempts = buildCameraAttempts(cameraFacingMode);
+      let lastError = null;
 
-      navigator.mediaDevices.getUserMedia(constraints)
-        .then(function(stream) {
-          videoStream = stream;
-          video.srcObject = stream;
-          return video.play();
-        })
-        .then(function() {
-          showWaiting(getCameraName() + ' 준비 완료. ' + checkType + ' QR을 보여주세요.');
-          scanTimer = setInterval(scanFrame, 300);
-        })
-        .catch(function(error) {
-          startScannerFallback(error);
-        });
+      for (let i = 0; i < attempts.length; i++) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia(attempts[i].constraints);
+          await attachStream(stream, attempts[i].label);
+          return;
+        } catch (error) {
+          lastError = error;
+          setStatus('카메라 시도 실패: ' + attempts[i].label + '\n' + error.name + ' / ' + error.message);
+        }
+      }
+
+      playFailSound();
+      const msg = makeCameraErrorMessage(lastError);
+      showFail(msg);
+      setStatus(msg + '\n\n해결: 주소창 왼쪽 자물쇠/설정 아이콘 → 카메라 → 허용 → 새로고침');
+      speak('카메라를 시작하지 못했습니다. 카메라 권한을 확인해주세요.');
     }
 
-    function startScannerFallback(originalError) {
-      const video = document.getElementById('video');
-      showWaiting('기본 카메라로 다시 시도 중...');
+    function buildCameraAttempts(mode) {
+      const preferred = mode === 'environment' ? 'environment' : 'user';
+      const other = preferred === 'user' ? 'environment' : 'user';
 
-      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-        .then(function(stream) {
-          videoStream = stream;
-          video.srcObject = stream;
-          return video.play();
-        })
-        .then(function() {
-          showWaiting('카메라 준비 완료. QR을 보여주세요.');
-          scanTimer = setInterval(scanFrame, 300);
-        })
-        .catch(function(error) {
-          playFailSound();
-          showFail('카메라 시작 실패: ' + (originalError ? originalError.name : error.name) + ' / ' + error.message);
-          speak('카메라 시작에 실패했습니다. 권한을 확인해주세요.');
-        });
+      return [
+        {
+          label: preferred === 'user' ? '전면 카메라 정확히 요청' : '후면 카메라 정확히 요청',
+          constraints: { video: { facingMode: { exact: preferred }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }
+        },
+        {
+          label: preferred === 'user' ? '전면 카메라 우선 요청' : '후면 카메라 우선 요청',
+          constraints: { video: { facingMode: { ideal: preferred }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }
+        },
+        {
+          label: other === 'user' ? '전면/후면 반대 카메라 요청' : '전면/후면 반대 카메라 요청',
+          constraints: { video: { facingMode: { ideal: other }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }
+        },
+        {
+          label: '기본 카메라 요청',
+          constraints: { video: true, audio: false }
+        }
+      ];
+    }
+
+    async function attachStream(stream, label) {
+      const video = document.getElementById('video');
+      videoStream = stream;
+      video.srcObject = stream;
+      video.setAttribute('playsinline', true);
+      video.muted = true;
+
+      await video.play();
+
+      const track = stream.getVideoTracks()[0];
+      currentCameraLabel = track && track.label ? track.label : label;
+
+      showWaiting(getCameraName() + ' 준비 완료. ' + checkType + ' QR을 보여주세요.');
+      setStatus('카메라 작동 중\n사용 카메라: ' + currentCameraLabel + '\n연결 주소: ' + WEB_APP_URL);
+      speak(getCameraName() + '가 준비되었습니다.');
+
+      scanTimer = setInterval(scanFrame, 300);
     }
 
     function stopScanner(showMessage) {
@@ -337,11 +360,13 @@
 
       const video = document.getElementById('video');
       if (video) {
+        video.pause();
         video.srcObject = null;
       }
 
       if (showMessage !== false) {
         showWaiting('스캔이 중지되었습니다.');
+        setStatus('스캔 중지됨');
         speak('스캔이 중지되었습니다.');
       }
     }
@@ -358,12 +383,12 @@
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: 'dontInvert'
+        inversionAttempts: 'attemptBoth'
       });
 
       if (code && code.data) {
@@ -458,6 +483,46 @@
       }, 10000);
     }
 
+    function resetCameraGuide() {
+      const guide =
+        '카메라 권한 확인 방법\n\n' +
+        '1. 주소창 왼쪽 자물쇠 또는 설정 아이콘을 누르세요.\n' +
+        '2. 사이트 설정을 누르세요.\n' +
+        '3. 카메라를 허용으로 바꾸세요.\n' +
+        '4. 페이지를 새로고침하세요.\n' +
+        '5. 스캔 시작을 다시 누르세요.';
+
+      showFail(guide);
+      setStatus(guide);
+      speak('카메라 권한 안내를 확인해주세요.');
+    }
+
+    function makeCameraErrorMessage(error) {
+      if (!error) return '카메라를 시작하지 못했습니다.';
+
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        return '카메라 권한이 차단되어 있습니다. 주소창 왼쪽 설정에서 카메라를 허용해주세요.';
+      }
+
+      if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        return '사용 가능한 카메라를 찾지 못했습니다.';
+      }
+
+      if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        return '다른 앱이 카메라를 사용 중일 수 있습니다. 카메라 앱/화상회의 앱을 닫고 다시 시도해주세요.';
+      }
+
+      if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
+        return '요청한 전면/후면 카메라 조건이 맞지 않습니다. 다른 카메라 버튼을 눌러보세요.';
+      }
+
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        return '카메라는 HTTPS 주소에서만 작동합니다. GitHub Pages 주소로 열어주세요.';
+      }
+
+      return '카메라 시작 실패: ' + error.name + ' / ' + error.message;
+    }
+
     function setCameraDisplayMode() {
       const video = document.getElementById('video');
       if (!video) return;
@@ -520,7 +585,7 @@
     function showWaiting(text) {
       const box = document.getElementById('result');
       box.className = 'result waiting';
-      box.innerHTML = text;
+      box.innerHTML = escapeHtml(text);
     }
 
     function showSuccess(text) {
@@ -532,7 +597,11 @@
     function showFail(text) {
       const box = document.getElementById('result');
       box.className = 'result fail';
-      box.innerHTML = escapeHtml(text);
+      box.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+    }
+
+    function setStatus(text) {
+      document.getElementById('statusText').textContent = text;
     }
 
     function escapeHtml(value) {
@@ -544,8 +613,7 @@
         .replace(/'/g, '&#039;');
     }
 
-    document.getElementById('statusText').textContent =
-      '현재 기본 카메라: 전면 카메라 / 연결 주소: ' + WEB_APP_URL;
+    setStatus('현재 기본 카메라: 전면 카메라\n연결 주소: ' + WEB_APP_URL);
   </script>
 </body>
 </html>
